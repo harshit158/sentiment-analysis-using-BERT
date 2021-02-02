@@ -1,11 +1,30 @@
 import torch
 import pandas as pd
+import numpy as np
 from sklearn import metrics
 from sklearn import model_selection
+from transformers import AdamW
+from transformers import get_linear_schedule_with_warmup
+from transformers.utils.logging import enable_propagation
 
 import config
 import dataset
+import engine
 from model import BERTSentimentModel
+
+def get_data_loaders(df, mode='train'):
+    dataset = dataset.BERTDataset(
+        review=df.review.values,
+        target=df.target.values
+    )
+
+    data_loader = torch.utils.data.DataLoader(
+        dataset,
+        batch_size=config.TRAIN_BATCH_SIZE if mode=='train' else config.VALID_BATCH_SIZE,
+        num_workers=4
+    )
+
+    return data_loader
 
 
 def run():
@@ -29,27 +48,41 @@ def run():
     df_valid = df_valid.reset_index(drop=True)
 
     # preparing dataloaders
-    # train dataloader
-    train_dataset = dataset.BERTDataset(
-        ...
-    )
-
-    train_data_loader = torch.utils.data.DataLoader(
-        train_dataset,
-        batch_size=config.TRAIN_BATCH_SIZE,
-        num_workers=4
-    )
-
-    # valid dataloader
-    valid_dataset = dataset.BERTDataset(
-        ...
-    )
-
-    valid_data_loader = torch.utils.data.DataLoader(
-        valid_dataset,
-        batch_size=config.VALID_BATCH_SIZE,
-        num_workers=1
-    )
+    train_data_loader = get_data_loaders(df_train, mode='train')
+    valid_data_loader = get_data_loaders(df_valid, mode='valid')
 
     # instantiating the BERT model
     model = BERTSentimentModel()
+
+    param_optimizer = list(model.named_parameters())
+    no_decay = ["bias", "LayerNorm.bias", "LayerNorm.weight"]
+    optimizer_parameters = [
+        {'params':[p for n, p in param_optimizer if n not in no_decay], 'weight_decay':0.001},
+        {'params':[p for n, p in param_optimizer if n in no_decay], 'weight_decay':0.001}
+    ]
+
+    num_train_steps = int((len(df_train)/config.TRAIN_BATCH_SIZE)*config.EPOCHS) 
+    optimizer = AdamW(optimizer_parameters, lr=3e-5)
+    scheduler = get_linear_schedule_with_warmup(
+        optimizer, 
+        num_warmup_steps = 0,
+        num_train_steps=num_train_steps
+    )
+
+    best_accuracy = 0
+    for epoch in range(config.EPOCHS):
+        engine.train_fn(train_data_loader, model, optimizer)
+        outputs, targets = engine.eval_fn(valid_data_loader, model)
+        
+        # calculating evaluation metrics
+        outputs = np.array(outputs) >= 0.5
+        accuracy = metrics.accuracy_score(targets, outputs)
+        print(f"Accuracy score = {accuracy}")
+        
+        # saving model
+        if accuracy > best_accuracy:
+            torch.save(model.state_dict(), config.MODEL_PATH)
+            best_accuracy = accuracy
+
+if __name__ = "__main__":
+    run()
