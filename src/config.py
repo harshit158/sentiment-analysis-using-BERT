@@ -7,7 +7,7 @@ VALID_BATCH_SIZE = 4
 EPOCHS = 10
 
 # Model
-TOKENIZER = transformers.BertTokenizer.from_pretrained('bert_base_uncased')
+TOKENIZER = transformers.BertTokenizer.from_pretrained('bert-base-uncased')
 
 # Inputs Paths
 TRAINING_FILE = "../input/imdb.csv"

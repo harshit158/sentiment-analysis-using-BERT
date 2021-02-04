@@ -13,17 +13,16 @@ import engine
 from model import BERTSentimentModel
 
 def get_data_loaders(df, mode='train'):
-    dataset = dataset.BERTDataset(
-        review=df.review.values,
-        target=df.target.values
+    my_dataset = dataset.BERTDataset(
+        reviews=df.review.values,
+        targets=df.sentiment.values
     )
 
     data_loader = torch.utils.data.DataLoader(
-        dataset,
+        my_dataset,
         batch_size=config.TRAIN_BATCH_SIZE if mode=='train' else config.VALID_BATCH_SIZE,
         num_workers=4
     )
-
     return data_loader
 
 
@@ -58,7 +57,7 @@ def run():
     no_decay = ["bias", "LayerNorm.bias", "LayerNorm.weight"]
     optimizer_parameters = [
         {'params':[p for n, p in param_optimizer if n not in no_decay], 'weight_decay':0.001},
-        {'params':[p for n, p in param_optimizer if n in no_decay], 'weight_decay':0.001}
+        {'params':[p for n, p in param_optimizer if n in no_decay], 'weight_decay':0.0}
     ]
 
     num_train_steps = int((len(df_train)/config.TRAIN_BATCH_SIZE)*config.EPOCHS) 
@@ -66,12 +65,12 @@ def run():
     scheduler = get_linear_schedule_with_warmup(
         optimizer, 
         num_warmup_steps = 0,
-        num_train_steps=num_train_steps
+        num_training_steps=num_train_steps
     )
 
     best_accuracy = 0
     for epoch in range(config.EPOCHS):
-        engine.train_fn(train_data_loader, model, optimizer)
+        engine.train_fn(train_data_loader, model, optimizer, scheduler)
         outputs, targets = engine.eval_fn(valid_data_loader, model)
         
         # calculating evaluation metrics
@@ -84,5 +83,5 @@ def run():
             torch.save(model.state_dict(), config.MODEL_PATH)
             best_accuracy = accuracy
 
-if __name__ = "__main__":
+if __name__ == "__main__":
     run()

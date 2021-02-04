@@ -3,22 +3,28 @@ import torch.nn as nn
 from tqdm import tqdm
 
 def loss_fn(outputs, targets):
+    '''
+    outputs: [batch_size]
+    targets: [batch_size, 1]
+    '''
+    targets = targets.unsqueeze(1) # make it of same shape as outputs
+    targets = targets.type_as(outputs) # type(targets)-> long, type(outputs)->float
     return nn.BCEWithLogitsLoss()(outputs, targets)
 
-def train_fn(data_loader, model, optimizer):
+def train_fn(data_loader, model, optimizer, scheduler):
     model.train()
 
-    for idx, data in tqdm(enumerate(data_loader), total = len(data_loader)):
+    for idx, data in enumerate(tqdm(data_loader)):
         # getting input format from raw data
         ids = data['ids']
-        mask = data['attention_mask']
+        mask = data['mask']
         token_type_ids = data['token_type_ids']
         targets = data['target']
 
         optimizer.zero_grad()
 
         # running forward pass
-        outputs = model(
+        outputs = model( 
             ids = ids,
             attention_mask = mask,
             token_type_ids = token_type_ids
