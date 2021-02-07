@@ -1,4 +1,5 @@
 import transformers
+import torch
 
 # Network Configurations
 MAX_LEN = 512
@@ -14,3 +15,7 @@ TRAINING_FILE = "../input/imdb.csv"
 
 # Output Paths
 MODEL_PATH = "model.bin"  # The path to store the trained weights
+
+DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
+if DEVICE == 'cuda':
+    print('GPU found !!')

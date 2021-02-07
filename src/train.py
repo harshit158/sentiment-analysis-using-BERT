@@ -53,6 +53,10 @@ def run():
     # instantiating the BERT model
     model = BERTSentimentModel()
 
+    # moving the model to appropriate device (on GPU if available else CPU)
+    device = torch.device(config.DEVICE)
+    model.to(device)
+
     param_optimizer = list(model.named_parameters())
     no_decay = ["bias", "LayerNorm.bias", "LayerNorm.weight"]
     optimizer_parameters = [
@@ -70,8 +74,8 @@ def run():
 
     best_accuracy = 0
     for epoch in range(config.EPOCHS):
-        engine.train_fn(train_data_loader, model, optimizer, scheduler)
-        outputs, targets = engine.eval_fn(valid_data_loader, model)
+        engine.train_fn(train_data_loader, model, optimizer, scheduler, device)
+        outputs, targets = engine.eval_fn(valid_data_loader, model, device)
         
         # calculating evaluation metrics
         outputs = np.array(outputs) >= 0.5
