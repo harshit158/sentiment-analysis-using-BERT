@@ -1,0 +1,6 @@
+pandas==1.2.0
+numpy==1.19.5
+transformers==4.2.1
+tqdm==4.55.1
+torch==1.7.1+cpu
+scikit_learn==0.24.1
