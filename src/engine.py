@@ -59,7 +59,7 @@ def eval_fn(data_loader, model, device):
         for idx, data in tqdm(enumerate(data_loader), total=len(data_loader)):
             # getting input format from raw data
             ids = data['ids']
-            mask = data['attention_mask']
+            mask = data['mask']
             token_type_ids = data['token_type_ids']
             targets = data['target']
 
