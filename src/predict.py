@@ -51,11 +51,6 @@ class Predict:
         return output
 
 if __name__=="__main__":
-    # model=BERTSentimentModel()
-    # model.load_state_dict(torch.load(config.MODEL_PATH, map_location=config.DEVICE))
-    # model.to(config.DEVICE)
-    # model.eval()
-    
     # accepting test sample from user
     review = input('Enter the test sentence\n')
     print(Predict().predict(review))

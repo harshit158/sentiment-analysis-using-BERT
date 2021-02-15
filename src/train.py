@@ -93,7 +93,10 @@ def run(args):
 
         # saving model
         if accuracy > best_accuracy:
-            torch.save(model.state_dict(), config.MODEL_PATH)
+            if args['save_epochs']:
+                torch.save(model.state_dict(), config.MODEL_PATH.format(epoch+1))
+            else:
+                torch.save(model.state_dict(), config.MODEL_PATH.format(''))
             best_accuracy = accuracy
 
 
@@ -102,15 +105,18 @@ if __name__ == "__main__":
 
     parser.add_argument('-s', '--samples',
                         type=int,
-                        help='Number of samples to take from the original dataframe (before train-valid split')
+                        help='Number of samples to take from the original dataframe (before train-valid split)')
 
     parser.add_argument('-e', '--epochs',
                         type=int,
                         help='Number of epochs to train for')
 
+    parser.add_argument('-se', '--save_epochs',
+                        action='store_true',
+                        help='If true, saves the weights for each epoch (only if accuracy > best_accuracy')
+    
+
     args = parser.parse_args()
-    samples = args.samples
-    epochs = args.epochs
 
     args = vars(args)
     run(args)
